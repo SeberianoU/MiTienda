@@ -22,12 +22,12 @@ namespace BL_MiNegocio
         public bool Estado { get; set; }
     }
 
-    public class BL_Usuarios
+    public class BLUsuarios
     {
         Contexto _contexto;
         public BindingList<Usuario> listaUsuarios { get; set; }
-
-        public BL_Usuarios()
+        
+        public BLUsuarios()
         {
             _contexto = new Contexto();
             listaUsuarios = new BindingList<Usuario>();
@@ -37,16 +37,8 @@ namespace BL_MiNegocio
         {
             _contexto.Usuarios.Load();
             listaUsuarios = _contexto.Usuarios.Local.ToBindingList();
+
             return listaUsuarios;
-        }
-
-
-        public BindingList<Usuario> ObtenerUsuarios(string nombreUsuario)
-        {
-            var consulta = listaUsuarios.Where(p => p.NombreUsuario == nombreUsuario).ToList();
-            var resultado = new BindingList<Usuario>(consulta);
-
-            return resultado;
         }
 
         public void AgregarUsuario()
@@ -58,10 +50,12 @@ namespace BL_MiNegocio
         public Resultado GuardarUsuario(Usuario usuario)
         {
             var resultado = Validar(usuario);
-            if (resultado.Correcto == true)
+
+            if (resultado.Correcto == false)
             {
                 return resultado;
             }
+
             _contexto.SaveChanges();
             resultado.Correcto = true;
 
@@ -82,13 +76,23 @@ namespace BL_MiNegocio
             return false;
         }
 
+        public void CancelarCambios()
+        {
+            foreach (var item in _contexto.ChangeTracker.Entries())
+            {
+                item.State = EntityState.Unchanged;
+                item.Reload();
+            }
+        }
+
         private Resultado Validar(Usuario usuario)
         {
             var resultado = new Resultado();
+
             if (usuario.NombreUsuario == "")
             {
                 resultado.Correcto = false;
-                resultado.Mensaje = "Ingrese un nombre de usuario";
+                resultado.Mensaje = "Ingrese un nombre de Usuario";
             }
 
             if (usuario.Contraseña == "")
@@ -105,16 +109,5 @@ namespace BL_MiNegocio
 
             return resultado;
         }
-
-        public void CancelarCambios()
-        {
-            foreach (var item in _contexto.ChangeTracker.Entries())
-            {
-                item.State = EntityState.Unchanged;
-                item.Reload();
-            }
-        }
-
     }
-
 }
